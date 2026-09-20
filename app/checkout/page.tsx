@@ -171,7 +171,7 @@ export default function CheckoutPage() {
               alt="The North Tactical"
               width={36}
               height={36}
-              className="object-contain"
+              className="object-contain brightness-0 invert"
             />
             <span className="text-sm font-bold tracking-[0.2em] text-[#F5F5F5] uppercase">
               THE NORTH TACTICAL

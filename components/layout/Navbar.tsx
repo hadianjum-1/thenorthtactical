@@ -55,7 +55,7 @@ export function Navbar() {
                     width={44}
                     height={44}
                     priority
-                    className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(214,255,63,0.3)] transition-transform group-hover:scale-105"
+                    className="w-full h-full object-contain brightness-0 invert filter drop-shadow-[0_0_8px_rgba(255,255,255,0.25)] transition-transform group-hover:scale-105"
                   />
                 </div>
                 <div className="flex flex-col">

@@ -401,7 +401,7 @@ export default async function HomePage() {
                     alt="The North Tactical Badge"
                     width={280}
                     height={280}
-                    className="object-contain filter drop-shadow-[0_0_25px_rgba(214,255,63,0.25)]"
+                    className="object-contain brightness-0 invert filter drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
                   />
                 </div>
               </div>
