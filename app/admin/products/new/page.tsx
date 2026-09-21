@@ -1,7 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  ImageUploader,
+  type ProductImageOutput,
+} from "@/components/admin/ImageUploader";
 
 type Category = {
   id: string;
@@ -21,24 +25,22 @@ export default function NewProductPage() {
   const [compareAtPrice, setCompareAtPrice] = useState("");
   const [sku, setSku] = useState("");
   const [stock, setStock] = useState("0");
-  const [imageUrl, setImageUrl] = useState("");
   const [status, setStatus] = useState("DRAFT");
   const [featured, setFeatured] = useState(false);
 
+  // Multi-image state
+  const [images, setImages] = useState<ProductImageOutput[]>([]);
+  const [imageError, setImageError] = useState("");
+
   const [loading, setLoading] = useState(false);
-  const [loadingCategories, setLoadingCategories] =
-    useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadCategories() {
       try {
-        const response = await fetch(
-          "/api/admin/categories"
-        );
-
+        const response = await fetch("/api/admin/categories");
         const data = await response.json();
-
         if (response.ok) {
           setCategories(data.categories);
         }
@@ -48,7 +50,6 @@ export default function NewProductPage() {
         setLoadingCategories(false);
       }
     }
-
     loadCategories();
   }, []);
 
@@ -62,45 +63,50 @@ export default function NewProductPage() {
 
   function handleTitleChange(value: string) {
     setTitle(value);
-
     if (!slug) {
       setSlug(generateSlug(value));
     }
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  function handleImagesChange(updated: ProductImageOutput[]) {
+    setImages(updated);
+    setImageError("");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
+    setImageError("");
+
+    // Validate that uploads have completed (no in-flight files remain).
+    // The ImageUploader only calls onChange when there are no pending uploads,
+    // so if images is empty and the user hasn't touched the uploader yet,
+    // we still allow submission (images are optional).
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "/api/admin/products",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            slug,
-            description,
-            categoryId: categoryId || null,
-            price: Number(price),
-            compareAtPrice: compareAtPrice
-              ? Number(compareAtPrice)
-              : null,
-            sku,
-            stock: Number(stock),
-            imageUrl,
-            status,
-            featured,
-          }),
-        }
-      );
+      const response = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          slug,
+          description,
+          categoryId: categoryId || null,
+          price: Number(price),
+          compareAtPrice: compareAtPrice
+            ? Number(compareAtPrice)
+            : null,
+          sku,
+          stock: Number(stock),
+          images,   // ← array of { url, alt, sortOrder }
+          status,
+          featured,
+        }),
+      });
 
       const data = await response.json();
 
@@ -149,10 +155,8 @@ export default function NewProductPage() {
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-8"
-        >
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* ── Basic information ──────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-medium">
               Basic information
@@ -167,7 +171,7 @@ export default function NewProductPage() {
                     handleTitleChange(e.target.value)
                   }
                   placeholder="Example: Tactical Backpack"
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -179,7 +183,7 @@ export default function NewProductPage() {
                     setSlug(generateSlug(e.target.value))
                   }
                   placeholder="tactical-backpack"
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -192,7 +196,7 @@ export default function NewProductPage() {
                   }
                   rows={7}
                   placeholder="Describe the product..."
-                  className="input resize-none"
+                  className="w-full resize-none rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -202,13 +206,10 @@ export default function NewProductPage() {
                   onChange={(e) =>
                     setCategoryId(e.target.value)
                   }
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white focus:border-neutral-500 focus:outline-none"
                   disabled={loadingCategories}
                 >
-                  <option value="">
-                    Uncategorized
-                  </option>
-
+                  <option value="">Uncategorized</option>
                   {categories.map((category) => (
                     <option
                       key={category.id}
@@ -222,9 +223,10 @@ export default function NewProductPage() {
             </div>
           </section>
 
+          {/* ── Pricing & inventory ────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-medium">
-              Pricing & inventory
+              Pricing &amp; inventory
             </h2>
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -238,7 +240,7 @@ export default function NewProductPage() {
                     setPrice(e.target.value)
                   }
                   placeholder="4999"
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -251,7 +253,7 @@ export default function NewProductPage() {
                     setCompareAtPrice(e.target.value)
                   }
                   placeholder="5999"
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -259,11 +261,9 @@ export default function NewProductPage() {
                 <input
                   required
                   value={sku}
-                  onChange={(e) =>
-                    setSku(e.target.value)
-                  }
+                  onChange={(e) => setSku(e.target.value)}
                   placeholder="NT-BAG-001"
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -276,61 +276,51 @@ export default function NewProductPage() {
                   onChange={(e) =>
                     setStock(e.target.value)
                   }
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
             </div>
           </section>
 
+          {/* ── Product images ─────────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-medium">
-              Product image
-            </h2>
-
-            <div className="mt-6">
-              <Field label="Image URL">
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) =>
-                    setImageUrl(e.target.value)
-                  }
-                  placeholder="https://example.com/product.jpg"
-                  className="input"
-                />
-              </Field>
-
-              {imageUrl && (
-                <div className="mt-5">
-                  <img
-                    src={imageUrl}
-                    alt="Product preview"
-                    className="h-48 w-full rounded-xl object-cover"
-                  />
-                </div>
-              )}
+            <div className="mb-6">
+              <h2 className="text-xl font-medium">
+                Product images
+              </h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Upload up to as many images as needed. The first
+                image is used as the primary product photo.
+              </p>
             </div>
+
+            {imageError && (
+              <p className="mb-4 text-sm text-red-400">
+                {imageError}
+              </p>
+            )}
+
+            <ImageUploader
+              initialImages={[]}
+              onChange={handleImagesChange}
+              productTitle={title}
+            />
           </section>
 
+          {/* ── Publishing ─────────────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-medium">
-              Publishing
-            </h2>
+            <h2 className="text-xl font-medium">Publishing</h2>
 
             <div className="mt-6 space-y-5">
               <Field label="Status">
                 <select
                   value={status}
-                  onChange={(e) =>
-                    setStatus(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white focus:border-neutral-500 focus:outline-none"
                 >
                   <option value="DRAFT">Draft</option>
                   <option value="ACTIVE">Active</option>
-                  <option value="ARCHIVED">
-                    Archived
-                  </option>
+                  <option value="ARCHIVED">Archived</option>
                 </select>
               </Field>
 
@@ -343,7 +333,6 @@ export default function NewProductPage() {
                   }
                   className="h-4 w-4"
                 />
-
                 <span className="text-sm">
                   Feature this product
                 </span>
@@ -356,7 +345,7 @@ export default function NewProductPage() {
             disabled={loading}
             className="w-full rounded-xl bg-white px-6 py-4 font-medium text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Creating product..." : "Create Product"}
+            {loading ? "Creating product…" : "Create Product"}
           </button>
         </form>
       </div>
@@ -376,7 +365,6 @@ function Field({
       <label className="mb-2 block text-sm text-neutral-300">
         {label}
       </label>
-
       {children}
     </div>
   );

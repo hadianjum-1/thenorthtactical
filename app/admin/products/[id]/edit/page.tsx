@@ -2,6 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  ImageUploader,
+  type ProductImageOutput,
+} from "@/components/admin/ImageUploader";
 
 type Category = {
   id: string;
@@ -23,7 +28,10 @@ type Product = {
     stock: number;
   }[];
   images: {
+    id?: string;
     url: string;
+    alt?: string | null;
+    sortOrder?: number;
   }[];
 };
 
@@ -33,49 +41,48 @@ export default function EditProductPage() {
 
   const id = params.id as string;
 
-  const [categories, setCategories] = useState<Category[]>(
-    []
-  );
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [price, setPrice] = useState("");
-  const [compareAtPrice, setCompareAtPrice] =
-    useState("");
+  const [compareAtPrice, setCompareAtPrice] = useState("");
   const [sku, setSku] = useState("");
   const [stock, setStock] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [status, setStatus] = useState("DRAFT");
   const [featured, setFeatured] = useState(false);
+
+  // Multi-image state
+  const [images, setImages] = useState<ProductImageOutput[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       try {
-        const [productResponse, categoriesResponse] =
-          await Promise.all([
-            fetch(`/api/admin/products/${id}`),
-            fetch("/api/admin/categories"),
-          ]);
+        const [productResponse, categoriesResponse] = await Promise.all([
+          fetch(`/api/admin/products/${id}`),
+          fetch("/api/admin/categories"),
+        ]);
 
         const productData = await productResponse.json();
-        const categoriesData =
-          await categoriesResponse.json();
+        const categoriesData = await categoriesResponse.json();
 
         if (!productResponse.ok) {
           throw new Error(
-            productData.message ||
-              "Failed to load product."
+            productData.message || "Failed to load product."
           );
         }
 
         const product: Product = productData.product;
-
         const variant = product.variants[0];
 
         setTitle(product.title);
@@ -96,8 +103,15 @@ export default function EditProductPage() {
           setStock(String(variant.stock));
         }
 
-        if (product.images[0]) {
-          setImageUrl(product.images[0].url);
+        if (product.images && product.images.length > 0) {
+          setImages(
+            product.images.map((img, idx) => ({
+              url: img.url,
+              alt: img.alt || product.title,
+              sortOrder:
+                typeof img.sortOrder === "number" ? img.sortOrder : idx,
+            }))
+          );
         }
 
         if (categoriesResponse.ok) {
@@ -117,39 +131,42 @@ export default function EditProductPage() {
     loadData();
   }, [id]);
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  function generateSlug(value: string) {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
     setSaving(true);
 
     try {
-      const response = await fetch(
-        `/api/admin/products/${id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            slug,
-            description,
-            categoryId: categoryId || null,
-            price: Number(price),
-            compareAtPrice: compareAtPrice
-              ? Number(compareAtPrice)
-              : null,
-            sku,
-            stock: Number(stock),
-            imageUrl,
-            status,
-            featured,
-          }),
-        }
-      );
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          slug,
+          description,
+          categoryId: categoryId || null,
+          price: Number(price),
+          compareAtPrice: compareAtPrice
+            ? Number(compareAtPrice)
+            : null,
+          sku,
+          stock: Number(stock),
+          images, // Passes updated images list with sort order
+          status,
+          featured,
+        }),
+      });
 
       const data = await response.json();
 
@@ -172,6 +189,35 @@ export default function EditProductPage() {
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete product.");
+      }
+
+      router.push("/admin/products");
+      router.refresh();
+    } catch (delError) {
+      setError(
+        delError instanceof Error
+          ? delError.message
+          : "Failed to delete product."
+      );
+      setShowDeleteModal(false);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-950 text-neutral-400">
@@ -190,14 +236,25 @@ export default function EditProductPage() {
           ← Back
         </button>
 
-        <div className="mb-8 mt-6">
-          <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-            TheNorthTactical
-          </p>
+        <div className="mb-8 mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
+              TheNorthTactical
+            </p>
 
-          <h1 className="mt-2 text-4xl font-semibold">
-            Edit Product
-          </h1>
+            <h1 className="mt-2 text-4xl font-semibold">
+              Edit Product
+            </h1>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex items-center gap-2 rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-900/50 hover:text-white self-start sm:self-auto"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Product
+          </button>
         </div>
 
         {error && (
@@ -206,10 +263,8 @@ export default function EditProductPage() {
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-8"
-        >
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* ── Basic information ──────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-medium">
               Basic information
@@ -220,10 +275,8 @@ export default function EditProductPage() {
                 <input
                   required
                   value={title}
-                  onChange={(e) =>
-                    setTitle(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -232,9 +285,9 @@ export default function EditProductPage() {
                   required
                   value={slug}
                   onChange={(e) =>
-                    setSlug(e.target.value)
+                    setSlug(generateSlug(e.target.value))
                   }
-                  className="input"
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -242,31 +295,21 @@ export default function EditProductPage() {
                 <textarea
                   required
                   value={description}
-                  onChange={(e) =>
-                    setDescription(e.target.value)
-                  }
+                  onChange={(e) => setDescription(e.target.value)}
                   rows={7}
-                  className="input resize-none"
+                  className="w-full resize-none rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
               <Field label="Category">
                 <select
                   value={categoryId}
-                  onChange={(e) =>
-                    setCategoryId(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white focus:border-neutral-500 focus:outline-none"
                 >
-                  <option value="">
-                    Uncategorized
-                  </option>
-
+                  <option value="">Uncategorized</option>
                   {categories.map((category) => (
-                    <option
-                      key={category.id}
-                      value={category.id}
-                    >
+                    <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
                   ))}
@@ -275,9 +318,10 @@ export default function EditProductPage() {
             </div>
           </section>
 
+          {/* ── Pricing & inventory ────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-medium">
-              Pricing & inventory
+              Pricing &amp; inventory
             </h2>
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -287,10 +331,8 @@ export default function EditProductPage() {
                   type="number"
                   min="0"
                   value={price}
-                  onChange={(e) =>
-                    setPrice(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -299,10 +341,8 @@ export default function EditProductPage() {
                   type="number"
                   min="0"
                   value={compareAtPrice}
-                  onChange={(e) =>
-                    setCompareAtPrice(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setCompareAtPrice(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -310,10 +350,8 @@ export default function EditProductPage() {
                 <input
                   required
                   value={sku}
-                  onChange={(e) =>
-                    setSku(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setSku(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
 
@@ -323,61 +361,46 @@ export default function EditProductPage() {
                   type="number"
                   min="0"
                   value={stock}
-                  onChange={(e) =>
-                    setStock(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setStock(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white focus:border-neutral-500 focus:outline-none"
                 />
               </Field>
             </div>
           </section>
 
+          {/* ── Product images ─────────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-medium">
-              Image
-            </h2>
-
-            <div className="mt-6">
-              <Field label="Image URL">
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) =>
-                    setImageUrl(e.target.value)
-                  }
-                  className="input"
-                />
-              </Field>
-
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt={title}
-                  className="mt-5 h-48 w-full rounded-xl object-cover"
-                />
-              )}
+            <div className="mb-6">
+              <h2 className="text-xl font-medium">
+                Product images
+              </h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Upload or manage images for this product. The first image is used
+                as the primary product photo. Drag images to reorder them.
+              </p>
             </div>
+
+            <ImageUploader
+              initialImages={images}
+              onChange={setImages}
+              productTitle={title}
+            />
           </section>
 
+          {/* ── Publishing ─────────────────────────────────────────── */}
           <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-medium">
-              Publishing
-            </h2>
+            <h2 className="text-xl font-medium">Publishing</h2>
 
             <div className="mt-6 space-y-5">
               <Field label="Status">
                 <select
                   value={status}
-                  onChange={(e) =>
-                    setStatus(e.target.value)
-                  }
-                  className="input"
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2.5 text-sm text-white focus:border-neutral-500 focus:outline-none"
                 >
                   <option value="DRAFT">Draft</option>
                   <option value="ACTIVE">Active</option>
-                  <option value="ARCHIVED">
-                    Archived
-                  </option>
+                  <option value="ARCHIVED">Archived</option>
                 </select>
               </Field>
 
@@ -385,14 +408,11 @@ export default function EditProductPage() {
                 <input
                   type="checkbox"
                   checked={featured}
-                  onChange={(e) =>
-                    setFeatured(e.target.checked)
-                  }
+                  onChange={(e) => setFeatured(e.target.checked)}
+                  className="h-4 w-4"
                 />
 
-                <span className="text-sm">
-                  Featured product
-                </span>
+                <span className="text-sm">Featured product</span>
               </label>
             </div>
           </section>
@@ -400,11 +420,82 @@ export default function EditProductPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-xl bg-white px-6 py-4 font-medium text-black transition hover:bg-neutral-200 disabled:opacity-50"
+            className="w-full rounded-xl bg-white px-6 py-4 font-medium text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </form>
+
+        {/* ── Danger Zone ────────────────────────────────────────── */}
+        <section className="mt-12 rounded-2xl border border-red-950/60 bg-red-950/20 p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-base font-medium text-red-300">
+                Delete product
+              </h3>
+              <p className="mt-1 text-sm text-neutral-400">
+                Permanently remove this product and all associated images from the store.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-800/80 bg-red-950/50 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-900 hover:text-white"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Product
+            </button>
+          </div>
+        </section>
+
+        {/* ── Delete Confirmation Modal ──────────────────────────── */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-950/60 border border-red-900/50 text-red-400">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Delete Product
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-400">
+                    Are you sure you want to delete{" "}
+                    <span className="font-medium text-white">
+                      "{title}"
+                    </span>
+                    ? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => setShowDeleteModal(false)}
+                  className="rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-neutral-700 hover:text-white transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={handleDelete}
+                  className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 transition disabled:opacity-50"
+                >
+                  {deleting && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  {deleting ? "Deleting…" : "Delete Product"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

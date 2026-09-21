@@ -85,6 +85,7 @@ export async function POST(request: Request) {
       sku,
       stock,
       imageUrl,
+      images,
       status,
       featured,
     } = body;
@@ -142,6 +143,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Prepare images data
+    let imageCreateData: { url: string; alt: string; sortOrder: number }[] = [];
+    if (Array.isArray(images) && images.length > 0) {
+      imageCreateData = images
+        .filter(
+          (img: any) =>
+            img && typeof img.url === "string" && img.url.trim().length > 0
+        )
+        .map((img: any, index: number) => ({
+          url: String(img.url).trim(),
+          alt: String(img.alt || title).trim(),
+          sortOrder:
+            typeof img.sortOrder === "number" ? img.sortOrder : index,
+        }));
+    } else if (imageUrl) {
+      imageCreateData = [
+        {
+          url: String(imageUrl).trim(),
+          alt: String(title).trim(),
+          sortOrder: 0,
+        },
+      ];
+    }
+
     const product = await prisma.product.create({
       data: {
         title: String(title).trim(),
@@ -166,20 +191,21 @@ export async function POST(request: Request) {
           },
         },
 
-        images: imageUrl
-          ? {
-              create: {
-                url: String(imageUrl).trim(),
-                alt: String(title).trim(),
-                sortOrder: 0,
-              },
-            }
-          : undefined,
+        images:
+          imageCreateData.length > 0
+            ? {
+                create: imageCreateData,
+              }
+            : undefined,
       },
 
       include: {
         variants: true,
-        images: true,
+        images: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
         category: true,
       },
     });

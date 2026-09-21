@@ -55,7 +55,11 @@ export async function GET(
       include: {
         category: true,
         variants: true,
-        images: true,
+        images: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
       },
     });
 
@@ -117,6 +121,34 @@ export async function PATCH(
       );
     }
 
+    // Prepare images data if provided
+    let newImages: { url: string; alt: string; sortOrder: number }[] | null = null;
+    if (Array.isArray(body.images)) {
+      newImages = body.images
+        .filter(
+          (img: any) =>
+            img && typeof img.url === "string" && img.url.trim().length > 0
+        )
+        .map((img: any, index: number) => ({
+          url: String(img.url).trim(),
+          alt: String(img.alt || body.title || existingProduct.title).trim(),
+          sortOrder:
+            typeof img.sortOrder === "number" ? img.sortOrder : index,
+        }));
+    } else if (body.imageUrl !== undefined) {
+      if (body.imageUrl) {
+        newImages = [
+          {
+            url: String(body.imageUrl).trim(),
+            alt: String(body.title || existingProduct.title).trim(),
+            sortOrder: 0,
+          },
+        ];
+      } else {
+        newImages = [];
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
 
@@ -160,12 +192,24 @@ export async function PATCH(
                 },
               }
             : undefined,
+
+        images:
+          newImages !== null
+            ? {
+                deleteMany: {},
+                create: newImages,
+              }
+            : undefined,
       },
 
       include: {
         category: true,
         variants: true,
-        images: true,
+        images: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
       },
     });
 
@@ -191,26 +235,21 @@ export async function DELETE(
   { params }: Params
 ) {
   try {
-    const session = await auth();
+    const access = await checkAdminAccess();
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, message: "Only admins can delete products" },
-        { status: 403 }
-      );
+    if (access.response) {
+      return access.response;
     }
 
     const { id } = await params;
 
     const product = await prisma.product.findUnique({
       where: { id },
+      include: {
+        variants: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!product) {
@@ -223,9 +262,31 @@ export async function DELETE(
       );
     }
 
-    await prisma.product.delete({
-      where: { id },
-    });
+    const variantIds = product.variants.map((v) => v.id);
+
+    // Clean up dependent cart & bundle items before deleting product
+    await prisma.$transaction([
+      ...(variantIds.length > 0
+        ? [
+            prisma.cartItem.deleteMany({
+              where: { variantId: { in: variantIds } },
+            }),
+          ]
+        : []),
+      prisma.bundleItem.deleteMany({
+        where: {
+          OR: [
+            ...(variantIds.length > 0
+              ? [{ variantId: { in: variantIds } }]
+              : []),
+            { productId: id },
+          ],
+        },
+      }),
+      prisma.product.delete({
+        where: { id },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
