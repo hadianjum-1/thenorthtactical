@@ -96,7 +96,7 @@ export function Footer() {
               We design and supply high-performance tactical equipment, outdoor gear, and apparel for professionals, outdoor enthusiasts, and demanding missions.
             </p>
             <div className="text-xs font-mono text-[#737373]">
-              OPERATIONAL HQ · LAHORE / ISLAMABAD, PAKISTAN
+              PESHAWAR kPK, PAKISTAN
             </div>
           </div>
 

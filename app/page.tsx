@@ -67,71 +67,84 @@ export default async function HomePage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* 1. CINEMATIC TACTICAL HERO */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden border-b border-[#262626]">
-          {/* Tactical Background Overlay */}
-          <div className="absolute inset-0 z-0 bg-[#0A0A0A]">
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/70 to-transparent z-10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-transparent to-[#0A0A0A] z-10" />
-            {/* High-tech grid texture */}
-            <div className="absolute inset-0 tactical-grid-bg opacity-30 z-10" />
+       {/* 1. CINEMATIC TACTICAL HERO */}
+<section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden border-b border-[#262626] isolate">
 
-            {/* Tactical background graphic */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-              <div className="w-[800px] h-[800px] rounded-full border border-white/20 flex items-center justify-center animate-[spin_120s_linear_infinite]">
-                <div className="w-[600px] h-[600px] rounded-full border border-dashed border-[#D6FF3F]/30 flex items-center justify-center">
-                  <div className="w-[400px] h-[400px] rounded-full border border-white/10" />
-                </div>
-              </div>
-            </div>
-          </div>
+  {/* Hero background image */}
+  <div className="absolute inset-0 z-0">
+    <Image
+      src="/images/banners/hero-tactical.jpg.jpg"
+      alt="Premium tactical equipment in a rugged mountain environment"
+      fill
+      priority
+      sizes="100vw"
+      className="object-cover object-center"
+    />
+  </div>
 
-          {/* Hero Content */}
-          <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 flex flex-col items-center text-center">
-            {/* Tactical Kicker */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#D6FF3F]/30 bg-[#D6FF3F]/10 text-[#D6FF3F] text-xs font-mono tracking-[0.25em] uppercase mb-8 shadow-[0_0_20px_rgba(214,255,63,0.15)]">
-              <Crosshair className="w-3.5 h-3.5" />
-              <span>THE NORTH TACTICAL · OPERATIONAL GEAR</span>
-            </div>
+  {/* Dark overlays for text readability */}
+  <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#0A0A0A]/95 via-[#0A0A0A]/65 to-[#0A0A0A]/10" />
+  <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0A0A0A] via-transparent to-[#0A0A0A]/30" />
 
-            {/* Main Headline */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold uppercase tracking-tight text-[#F5F5F5] max-w-5xl leading-[1.05]">
-              EQUIPMENT BUILT <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFFFFF] via-[#F5F5F5] to-[#D6FF3F]">
-                FOR THE MISSION.
-              </span>
-            </h1>
+  {/* Subtle tactical grid */}
+  <div className="absolute inset-0 z-10 tactical-grid-bg opacity-20 pointer-events-none" />
 
-            {/* Subheading */}
-            <p className="mt-7 text-base sm:text-lg md:text-xl text-[#A3A3A3] max-w-2xl font-normal leading-relaxed">
-              Premium tactical equipment, loadout carriers, and rugged apparel for professionals who demand unconditional reliability in the field.
-            </p>
+  {/* Hero content */}
+  <div className="relative z-20 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
 
-            {/* CTA Buttons */}
-            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-              <Link href="/shop" className="w-full sm:w-auto">
-                <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                  <span>SHOP COLLECTION</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/shop?sort=newest" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  <span>EXPLORE NEW ARRIVALS</span>
-                </Button>
-              </Link>
-            </div>
+    <div className="max-w-4xl">
 
-            {/* Coordinates / Technical Stamp */}
-            <div className="mt-16 flex items-center gap-6 text-[11px] font-mono text-[#737373] tracking-widest uppercase">
-              <span>LAT: 33.6844° N</span>
-              <span>•</span>
-              <span>LON: 73.0479° E</span>
-              <span>•</span>
-              <span>ELEV: 540M</span>
-            </div>
-          </div>
-        </section>
+      {/* Kicker */}
+      <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#D6FF3F]/40 bg-black/40 backdrop-blur-md text-[#D6FF3F] text-xs font-mono tracking-[0.25em] uppercase mb-8">
+        <Crosshair className="w-3.5 h-3.5" />
+        <span>THE NORTH TACTICAL · OPERATIONAL GEAR</span>
+      </div>
+
+      {/* Headline */}
+      <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold uppercase tracking-tight text-[#F5F5F5] max-w-5xl leading-[1.05] drop-shadow-lg">
+        EQUIPMENT BUILT
+        <br />
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#F5F5F5] to-[#D6FF3F]">
+          FOR THE MISSION.
+        </span>
+      </h1>
+
+      {/* Description */}
+      <p className="mt-7 text-base sm:text-lg md:text-xl text-[#D4D4D4] max-w-2xl leading-relaxed">
+        Premium tactical equipment, loadout carriers, and rugged apparel
+        for professionals who demand unconditional reliability in the field.
+      </p>
+
+      {/* Buttons */}
+      <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+
+        <Link href="/shop" className="w-full sm:w-auto">
+          <Button variant="primary" size="lg" className="w-full sm:w-auto">
+            <span>SHOP COLLECTION</span>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </Link>
+
+        <Link href="/shop?sort=newest" className="w-full sm:w-auto">
+          <Button variant="outline" size="lg" className="w-full sm:w-auto">
+            <span>EXPLORE NEW ARRIVALS</span>
+          </Button>
+        </Link>
+
+      </div>
+
+      {/* Technical stamp */}
+      <div className="mt-12 sm:mt-16 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] sm:text-[11px] font-mono text-[#A3A3A3] tracking-widest uppercase">
+        <span>FIELD EQUIPMENT</span>
+        <span className="text-[#D6FF3F]">•</span>
+        <span>BUILT FOR THE ELEMENTS</span>
+        <span className="text-[#D6FF3F]">•</span>
+        <span>READY FOR EVERYDAY ADVENTURE</span>
+      </div>
+
+    </div>
+  </div>
+</section>
 
         {/* 2. TRUST / BRAND STRIP */}
         <section className="border-b border-[#262626] bg-[#0E0E0E] py-5">
@@ -214,100 +227,159 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Collection 1 */}
-              <Link
-                href="/shop?category=tactical"
-                className="group relative h-[380px] sm:h-[440px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/50"
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent z-10" />
-                <div className="absolute inset-0 tactical-grid-bg opacity-20" />
-                <div className="relative z-20">
-                  <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
-                    SERIES 01 // LOADOUT
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-2 group-hover:text-[#D6FF3F] transition-colors">
-                    TACTICAL FIELD EQUIPMENT
-                  </h3>
-                  <p className="text-xs text-[#A3A3A3] mt-2 max-w-sm">
-                    Plate carriers, modular chest rigs, pouches, and combat belts engineered to hold your frontline loadout.
-                  </p>
-                </div>
-                <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
-                  <span>EXPLORE LOADOUT EQUIPMENT</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-                </div>
-              </Link>
 
-              {/* Collection 2 */}
-              <Link
-                href="/shop?category=outdoor"
-                className="group relative h-[380px] sm:h-[440px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/50"
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent z-10" />
-                <div className="absolute inset-0 tactical-grid-bg opacity-20" />
-                <div className="relative z-20">
-                  <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
-                    SERIES 02 // TERRAIN
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-2 group-hover:text-[#D6FF3F] transition-colors">
-                    OUTDOOR ADVENTURE GEAR
-                  </h3>
-                  <p className="text-xs text-[#A3A3A3] mt-2 max-w-sm">
-                    All-weather backpacks, emergency survival kits, tactical boots, and thermal protective layers.
-                  </p>
-                </div>
-                <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
-                  <span>EXPLORE OUTDOOR GEAR</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-                </div>
-              </Link>
+  {/* COLLECTION 01 — LOADOUT */}
+  <Link
+    href="/shop?category=tactical"
+    className="group relative isolate h-[380px] sm:h-[440px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/60"
+  >
+    <Image
+      src="/images/banners/collection-loadout.jpg.jpg"
+      alt="Tactical field equipment and modular loadout gear"
+      fill
+      sizes="(max-width: 768px) 100vw, 50vw"
+      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+    />
 
-              {/* Collection 3 */}
-              <Link
-                href="/shop?category=edc"
-                className="group relative h-[320px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/50"
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent z-10" />
-                <div className="relative z-20">
-                  <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
-                    SERIES 03 // DAILY CARRY
-                  </span>
-                  <h3 className="text-2xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-2 group-hover:text-[#D6FF3F] transition-colors">
-                    EVERYDAY CARRY (EDC)
-                  </h3>
-                  <p className="text-xs text-[#A3A3A3] mt-2 max-w-sm">
-                    High-output tactical flashlights, precision folding blades, multi-tools, and RFID tactical wallets.
-                  </p>
-                </div>
-                <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
-                  <span>EXPLORE EDC TOOLS</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-                </div>
-              </Link>
+    <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/65 to-[#0A0A0A]/10" />
+    <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#0A0A0A]/50 to-transparent" />
 
-              {/* Collection 4 */}
-              <Link
-                href="/shop?filter=bundles"
-                className="group relative h-[320px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/50"
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent z-10" />
-                <div className="relative z-20">
-                  <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
-                    SERIES 04 // FIELD KITS
-                  </span>
-                  <h3 className="text-2xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-2 group-hover:text-[#D6FF3F] transition-colors">
-                    TACTICAL STARTER BUNDLES
-                  </h3>
-                  <p className="text-xs text-[#A3A3A3] mt-2 max-w-sm">
-                    Curated mission sets offering unmatched savings and instant operational preparedness.
-                  </p>
-                </div>
-                <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
-                  <span>EXPLORE BUNDLE PACKS</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-                </div>
-              </Link>
-            </div>
+    <div className="relative z-20">
+      <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
+        SERIES 01 // LOADOUT
+      </span>
+
+      <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-3 group-hover:text-[#D6FF3F] transition-colors">
+        TACTICAL FIELD EQUIPMENT
+      </h3>
+
+      <p className="text-sm text-[#D4D4D4] mt-3 max-w-sm leading-relaxed">
+        Plate carriers, modular chest rigs, pouches, and tactical belts
+        engineered to organize your field loadout.
+      </p>
+    </div>
+
+    <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
+      <span>EXPLORE LOADOUT EQUIPMENT</span>
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
+    </div>
+  </Link>
+
+
+  {/* COLLECTION 02 — TERRAIN */}
+  <Link
+    href="/shop?category=outdoor"
+    className="group relative isolate h-[380px] sm:h-[440px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/60"
+  >
+    <Image
+      src="/images/banners/collection-outdoor.jpg"
+      alt="Rugged outdoor adventure equipment in mountain terrain"
+      fill
+      sizes="(max-width: 768px) 100vw, 50vw"
+      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+    />
+
+    <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/65 to-[#0A0A0A]/10" />
+    <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#0A0A0A]/50 to-transparent" />
+
+    <div className="relative z-20">
+      <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
+        SERIES 02 // TERRAIN
+      </span>
+
+      <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-3 group-hover:text-[#D6FF3F] transition-colors">
+        OUTDOOR ADVENTURE GEAR
+      </h3>
+
+      <p className="text-sm text-[#D4D4D4] mt-3 max-w-sm leading-relaxed">
+        All-weather backpacks, outdoor essentials, tactical boots,
+        and protective layers for demanding terrain.
+      </p>
+    </div>
+
+    <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
+      <span>EXPLORE OUTDOOR GEAR</span>
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
+    </div>
+  </Link>
+
+
+  {/* COLLECTION 03 — DAILY CARRY */}
+  <Link
+    href="/shop?category=edc"
+    className="group relative isolate h-[340px] sm:h-[380px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/60"
+  >
+    <Image
+      src="/images/banners/collection-edc.jpg"
+      alt="Everyday carry tools and compact utility accessories"
+      fill
+      sizes="(max-width: 768px) 100vw, 50vw"
+      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+    />
+
+    <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/65 to-[#0A0A0A]/10" />
+    <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#0A0A0A]/50 to-transparent" />
+
+    <div className="relative z-20">
+      <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
+        SERIES 03 // DAILY CARRY
+      </span>
+
+      <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-3 group-hover:text-[#D6FF3F] transition-colors">
+        EVERYDAY CARRY (EDC)
+      </h3>
+
+      <p className="text-sm text-[#D4D4D4] mt-3 max-w-sm leading-relaxed">
+        Compact flashlights, multi-tools, organizers, and practical
+        everyday accessories designed for daily utility.
+      </p>
+    </div>
+
+    <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
+      <span>EXPLORE EDC TOOLS</span>
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
+    </div>
+  </Link>
+
+
+  {/* COLLECTION 04 — FIELD KITS */}
+  <Link
+    href="/shop?filter=bundles"
+    className="group relative isolate h-[340px] sm:h-[380px] rounded-3xl overflow-hidden border border-[#292929] bg-[#141414] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#D6FF3F]/60"
+  >
+    <Image
+      src="/images/banners/collection-bundles.jpg"
+      alt="Curated tactical outdoor equipment starter bundle"
+      fill
+      sizes="(max-width: 768px) 100vw, 50vw"
+      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+    />
+
+    <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/65 to-[#0A0A0A]/10" />
+    <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#0A0A0A]/50 to-transparent" />
+
+    <div className="relative z-20">
+      <span className="text-xs font-mono tracking-widest text-[#D6FF3F] uppercase">
+        SERIES 04 // FIELD KITS
+      </span>
+
+      <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-[#F5F5F5] mt-3 group-hover:text-[#D6FF3F] transition-colors">
+        TACTICAL STARTER BUNDLES
+      </h3>
+
+      <p className="text-sm text-[#D4D4D4] mt-3 max-w-sm leading-relaxed">
+        Curated gear combinations bringing essential outdoor and
+        utility equipment together in convenient kits.
+      </p>
+    </div>
+
+    <div className="relative z-20 flex items-center gap-2 text-xs font-mono tracking-wider font-bold text-[#F5F5F5] group-hover:text-[#D6FF3F] transition-colors">
+      <span>EXPLORE BUNDLE PACKS</span>
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
+    </div>
+  </Link>
+
+</div>
           </div>
         </section>
 
