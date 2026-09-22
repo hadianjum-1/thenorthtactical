@@ -24,6 +24,7 @@ import React, {
   useCallback,
   useRef,
   useState,
+  useEffect,
   DragEvent,
 } from "react";
 import { Upload, X, Star, GripVertical, ImageOff, AlertCircle } from "lucide-react";
@@ -258,25 +259,23 @@ export function ImageUploader({
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // Drag-to-reorder state
   const dragIndexRef = useRef<number | null>(null);
 
-  // ── Notify parent whenever the committed list changes ─────────────────────
-  const notify = useCallback(
-    (updated: ImageEntry[]) => {
-      const hasInFlight = updated.some(
-        (e) => e.kind === "pending" && !e.error
-      );
-      if (!hasInFlight) {
-        // Defer parent state update outside the current render cycle
-        setTimeout(() => {
-          onChange(buildOutput(updated));
-        }, 0);
-      }
-    },
-    [onChange]
-  );
+  // Notify the parent from committed state so uploads cannot publish a stale list.
+  useEffect(() => {
+    const hasInFlight = entries.some(
+      (entry) => entry.kind === "pending" && !entry.error
+    );
+    if (!hasInFlight) {
+      onChangeRef.current(buildOutput(entries));
+    }
+  }, [entries]);
 
   // ── Start Upload for a Single Pending Entry ───────────────────────────────
   const startUpload = useCallback(
@@ -299,7 +298,6 @@ export function ImageUploader({
         // Step 3: Replace pending with uploaded entry
         URL.revokeObjectURL(pendingItem.previewUrl);
 
-        let updatedList: ImageEntry[] = [];
         setEntries((prev) => {
           const next = prev.map((e): ImageEntry => {
             if (e.kind === "pending" && e.id === pendingItem.id) {
@@ -314,11 +312,9 @@ export function ImageUploader({
             }
             return e;
           });
-          updatedList = next;
           return next;
         });
 
-        notify(updatedList);
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : "Upload failed.";
@@ -331,7 +327,7 @@ export function ImageUploader({
         );
       }
     },
-    [notify, productTitle]
+    [productTitle]
   );
 
   // ── File ingestion ────────────────────────────────────────────────────────
@@ -399,17 +395,13 @@ export function ImageUploader({
 
   // ── Image management ─────────────────────────────────────────────────────
   function removeEntry(index: number) {
-    let updatedList: ImageEntry[] = [];
     setEntries((prev) => {
       const target = prev[index];
       if (target && target.kind === "pending") {
         URL.revokeObjectURL(target.previewUrl);
       }
-      const next = prev.filter((_, i) => i !== index);
-      updatedList = next;
-      return next;
+      return prev.filter((_, i) => i !== index);
     });
-    notify(updatedList);
   }
 
   function retryEntry(index: number) {
@@ -430,16 +422,13 @@ export function ImageUploader({
 
   function setPrimary(index: number) {
     if (index === 0) return;
-    let updatedList: ImageEntry[] = [];
     setEntries((prev) => {
       if (index === 0) return prev;
       const next = [...prev];
       const [item] = next.splice(index, 1);
       next.unshift(item);
-      updatedList = next;
       return next;
     });
-    notify(updatedList);
   }
 
   // ── Drag-to-reorder (native HTML5) ───────────────────────────────────────
@@ -470,15 +459,12 @@ export function ImageUploader({
 
     if (fromIndex === null || fromIndex === dropIndex) return;
 
-    let updatedList: ImageEntry[] = [];
     setEntries((prev) => {
       const next = [...prev];
       const [moved] = next.splice(fromIndex, 1);
       next.splice(dropIndex, 0, moved);
-      updatedList = next;
       return next;
     });
-    notify(updatedList);
   }
 
   function handleItemDragEnd() {
