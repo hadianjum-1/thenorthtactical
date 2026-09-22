@@ -13,6 +13,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
+export const runtime = "nodejs";
+
 async function requireAdmin() {
   const session = await auth();
 
